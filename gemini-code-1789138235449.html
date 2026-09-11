@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-Life RPG — Turn Tasks into Quests</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* ==========================================================================
+       RESET & VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-dark: #090a0f;
+      --bg-card: rgba(18, 22, 36, 0.75);
+      --bg-card-hover: rgba(26, 32, 54, 0.85);
+      --border-color: rgba(138, 107, 255, 0.25);
+      --border-glow: rgba(138, 107, 255, 0.6);
+      
+      --primary: #8a6bff;
+      --primary-glow: rgba(138, 107, 255, 0.4);
+      --secondary: #00f0ff;
+      --secondary-glow: rgba(0, 240, 255, 0.3);
+      --gold: #ffd700;
+      --gold-glow: rgba(255, 215, 0, 0.4);
+      --danger: #ff4757;
+      --text-main: #f0f3ff;
+      --text-muted: #9aa4bf;
+
+      /* Tier Colors */
+      --tier-bronze: #cd7f32;
+      --tier-silver: #c0c0c0;
+      --tier-gold: #ffd700;
+      --tier-platinum: #e5e4e2;
+
+      --font-heading: 'Cinzel', serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(138, 107, 255, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(0, 240, 255, 0.05) 0%, transparent 40%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-dark); }
+    ::-webkit-scrollbar-thumb { background: #2a2f45; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+    /* ==========================================================================
+       TYPOGRAPHY & UTILITIES
+       ========================================================================== */
+    h1, h2, h3, .heading-font {
+      font-family: var(--font-heading);
+      letter-spacing: 1px;
+    }
+
+    .glow-text-gold {
+      color: var(--gold);
+      text-shadow: 0 0 10px var(--gold-glow);
+    }
+
+    .glow-text-primary {
+      color: var(--primary);
+      text-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* ==========================================================================
+       WELCOME / ENTRY GREETING SCREEN
+       ========================================================================== */
+    .portal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, rgba(9, 10, 15, 0.95) 0%, rgba(18, 22, 36, 0.98) 100%),
+                  url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1600&q=80') center/cover;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    .portal-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .portal-card {
+      background: var(--bg-card);
+      border: 2px solid var(--border-glow);
+      box-shadow: 0 0 50px rgba(138, 107, 255, 0.25);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+      animation: portalPulse 3s infinite ease-in-out;
+    }
+
+    @keyframes portalPulse {
+      0%, 100% { box-shadow: 0 0 30px rgba(138, 107, 255, 0.25); }
+      50% { box-shadow: 0 0 60px rgba(138, 107, 255, 0.45); }
+    }
+
+    .portal-icon {
+      font-size: 3.5rem;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 12px var(--gold-glow));
+    }
+
+    .switch-hero-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: var(--transition);
+    }
+
+    .switch-hero-btn:hover {
+      color: var(--secondary);
+    }
+
+    /* ==========================================================================
+       NAVIGATION
+       ========================================================================== */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 10, 15, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .brand i {
+      color: var(--gold);
+      filter: drop-shadow(0 0 8px var(--gold-glow));
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.5rem;
+      list-style: none;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      color: var(--text-main);
+      background: rgba(138, 107, 255, 0.12);
+      border-color: var(--border-glow);
+      box-shadow: 0 0 12px rgba(138, 107, 255, 0.2);
+    }
+
+    .nav-btn.active {
+      color: var(--secondary);
+      border-color: var(--secondary);
+    }
+
+    /* ==========================================================================
+       CONTAINER & SECTIONS
+       ========================================================================== */
+    main {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem 1.5rem;
+      flex: 1;
+    }
+
+    .section-block {
+      display: none;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .section-block.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    /* ==========================================================================
+       CARDS & UI COMPONENTS
+       ========================================================================== */
+    .rpg-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rpg-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: 0 8px 32px rgba(138, 107, 255, 0.15);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+
+    /* Progress Bar */
+    .progress-container {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      height: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      width: 0%;
+      transition: width 0.5s ease-in-out;
+      box-shadow: 0 0 12px var(--secondary-glow);
+      border-radius: 20px;
+    }
+
+    /* Buttons */
+    .rpg-btn {
+      background: linear-gradient(135deg, #6c47ff 0%, #8a6bff 100%);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 15px rgba(108, 71, 255, 0.3);
+    }
+
+    .rpg-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(108, 71, 255, 0.5);
+      filter: brightness(1.1);
+    }
+
+    .rpg-btn:active { transform: translateY(0); }
+
+    /* ==========================================================================
+       DASHBOARD SECTION
+       ========================================================================== */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(20, 16, 45, 0.8) 0%, rgba(10, 12, 25, 0.9) 100%),
+                  url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80') center/cover;
+      border: 1px solid var(--border-glow);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      box-shadow: 0 0 30px rgba(138, 107, 255, 0.15);
+    }
+
+    .hero-title-group h1 {
+      font-size: 2.5rem;
+      color: var(--text-main);
+      margin-bottom: 0.25rem;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .slogan {
+      color: var(--gold);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 1rem;
+    }
+
+    .streak-badge {
+      background: rgba(255, 87, 34, 0.15);
+      border: 1px solid #ff5722;
+      color: #ff7043;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: 0 0 15px rgba(255, 87, 34, 0.2);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(255, 87, 34, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 87, 34, 0); }
+    }
+
+    .hero-level-display {
+      text-align: center;
+      background: rgba(9, 10, 15, 0.7);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      min-width: 180px;
+    }
+
+    .level-num {
+      font-size: 3rem;
+      font-family: var(--font-heading);
+      color: var(--secondary);
+      line-height: 1;
+      text-shadow: 0 0 15px var(--secondary-glow);
+    }
+
+    .stat-card {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background: rgba(138, 107, 255, 0.15);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .stat-val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+    }
+
+    .stat-lbl {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* ==========================================================================
+       QUESTS SECTION
+       ========================================================================== */
+    .quest-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .quest-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    .quest-card.completed {
+      opacity: 0.6;
+      border-color: rgba(76, 175, 80, 0.3);
+      background: rgba(15, 30, 20, 0.4);
+    }
+
+    .quest-card.completed .quest-title {
+      text-decoration: line-through;
+    }
+
+    .quest-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .quest-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: var(--secondary);
+    }
+
+    .quest-tag {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-easy { background: rgba(76, 175, 80, 0.15); color: #81c784; border: 1px solid rgba(76, 175, 80, 0.3); }
+    .tag-medium { background: rgba(255, 152, 0, 0.15); color: #ffb74d; border: 1px solid rgba(255, 152, 0, 0.3); }
+    .tag-hard { background: rgba(244, 67, 54, 0.15); color: #e57373; border: 1px solid rgba(244, 67, 54, 0.3); }
+
+    .quest-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .quest-desc {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      margin-bottom: 1.5rem;
+      flex-grow: 1;
+    }
+
+    .quest-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 1rem;
+    }
+
+    .quest-reward {
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Custom Task Form */
+    .create-quest-form {
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .form-input {
+      background: rgba(9, 10, 15, 0.8);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .form-input:focus {
+      border-color: var(--secondary);
+      box-shadow: 0 0 10px var(--secondary-glow);
+    }
+
+    .form-input-flex { flex: 1; min-width: 200px; }
+
+    /* ==========================================================================
+       CHARACTER PROFILE
+       ========================================================================== */
+    .profile-header {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .avatar-frame {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 20px var(--gold-glow);
+      background: #121624 center/cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      color: var(--primary);
+    }
+
+    .char-stats-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .char-stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* ==========================================================================
+       ACHIEVEMENTS / BADGES SECTION
+       ========================================================================== */
+    .badge-filters {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .badge-filter-btn {
+      background: rgba(18, 22, 36, 0.8);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .badge-filter-btn:hover, .badge-filter-btn.active {
+      color: var(--text-main);
+      border-color: var(--secondary);
+      background: rgba(0, 240, 255, 0.1);
+    }
+
+    .achievement-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      position: relative;
+    }
+
+    .achievement-card.locked {
+      filter: grayscale(0.8);
+      opacity: 0.5;
+    }
+
+    .achievement-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    /* Tier Specific Styling */
+    .tier-bronze .achievement-icon {
+      background: linear-gradient(135deg, rgba(205, 127, 50, 0.3), rgba(205, 127, 50, 0.1));
+      border: 2px solid var(--tier-bronze);
+      color: var(--tier-bronze);
+      box-shadow: 0 0 12px rgba(205, 127, 50, 0.3);
+    }
+
+    .tier-silver .achievement-icon {
+      background: linear-gradient(135deg, rgba(192, 192, 192, 0.3), rgba(192, 192, 192, 0.1));
+      border: 2px solid var(--tier-silver);
+      color: var(--tier-silver);
+      box-shadow: 0 0 12px rgba(192, 192, 192, 0.4);
+    }
+
+    .tier-gold .achievement-icon {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1));
+      border: 2px solid var(--tier-gold);
+      color: var(--tier-gold);
+      box-shadow: 0 0 15px var(--gold-glow);
+    }
+
+    .tier-platinum .achievement-icon {
+      background: linear-gradient(135deg, rgba(229, 228, 226, 0.4), rgba(0, 240, 255, 0.2));
+      border: 2px solid var(--tier-platinum);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+    }
+
+    .achievement-card.locked .achievement-icon {
+      border-color: var(--text-muted) !important;
+      box-shadow: none !important;
+      color: var(--text-muted) !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .achievement-info {
+      flex: 1;
+    }
+
+    .achievement-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .achievement-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .badge-tier-tag {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .tag-tier-bronze { background: rgba(205, 127, 50, 0.2); color: var(--tier-bronze); border: 1px solid var(--tier-bronze); }
+    .tag-tier-silver { background: rgba(192, 192, 192, 0.2); color: var(--tier-silver); border: 1px solid var(--tier-silver); }
+    .tag-tier-gold { background: rgba(255, 215, 0, 0.2); color: var(--tier-gold); border: 1px solid var(--tier-gold); }
+    .tag-tier-platinum { background: rgba(0, 240, 255, 0.2); color: var(--secondary); border: 1px solid var(--secondary); }
+
+    .badge-progress-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      text-align: right;
+    }
+
+    /* ==========================================================================
+       AI GUIDE SECTION
+       ========================================================================== */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 400px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background: rgba(9, 10, 15, 0.6);
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .message.bot {
+      background: rgba(138, 107, 255, 0.15);
+      border: 1px solid var(--border-color);
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+
+    .message.user {
+      background: linear-gradient(135deg, #6c47ff, #8a6bff);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1rem;
+      background: rgba(18, 22, 36, 0.9);
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* ==========================================================================
+       LEVEL UP MODAL
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .level-modal {
+      background: var(--bg-card);
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 50px var(--gold-glow);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      max-width: 450px;
+      width: 90%;
+      transform: scale(0.8);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-overlay.active .level-modal {
+      transform: scale(1);
+    }
+
+    .modal-icon {
+      font-size: 4rem;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      text-shadow: 0 0 20px var(--gold-glow);
+      animation: bounce 1s infinite alternate;
+    }
+
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+
+    /* ==========================================================================
+       RESPONSIVE DESIGN
+       ========================================================================== */
+    @media (max-width: 900px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .hero-banner { flex-direction: column; text-align: center; gap: 1.5rem; }
+      .hero-level-display { width: 100%; }
+      .profile-header { flex-direction: column; text-align: center; }
+      nav { flex-direction: column; gap: 1rem; padding: 1rem; }
+      .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       WELCOME / PORTAL SCREEN
+       ========================================================================== -->
+  <div class="portal-overlay" id="portalOverlay">
+    <div class="portal-card">
+      <div class="portal-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <h1 class="heading-font glow-text-gold" style="font-size: 2.2rem; margin-bottom: 0.25rem;">REAL-LIFE RPG</h1>
+      <p class="slogan" style="margin-bottom: 1rem;">YOUR LIFE. YOUR QUEST. YOUR ADVENTURE.</p>
+      
+      <h2 id="portalGreetingTitle" style="font-size: 1.3rem; color: var(--secondary); margin-bottom: 1.5rem;">
+        Greetings, Traveler!
+      </h2>
+
+      <form id="portalForm" onsubmit="enterRealLifeRpg(event)">
+        <div style="margin-bottom: 1.5rem;" id="heroNameInputWrapper">
+          <input type="text" id="heroNameInput" class="form-input" style="width: 100%; text-align: center; font-size: 1.05rem;" placeholder="Enter Your Hero Name..." autocomplete="off">
+        </div>
+        <button type="submit" id="portalEnterBtn" class="rpg-btn" style="width: 100%; padding: 0.9rem; font-size: 1rem;">
+          <i class="fa-solid fa-dungeon"></i> Begin Adventure
+        </button>
+      </form>
+
+      <button id="switchHeroBtn" class="switch-hero-btn" style="display: none;" onclick="enableHeroNameEdit()">
+        Create New Hero Profile (Resets Progress)
+      </button>
+    </div>
+  </div>
+
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="#" class="brand" onclick="switchTab('dashboard')">
+      <i class="fa-solid fa-shield-halved"></i>
+      <span>REAL-LIFE RPG</span>
+    </a>
+    <ul class="nav-links">
+      <li><button class="nav-btn active" onclick="switchTab('dashboard')"><i class="fa-solid fa-house"></i> Dashboard</button></li>
+      <li><button class="nav-btn" onclick="switchTab('quests')"><i class="fa-solid fa-scroll"></i> Quests</button></li>
+      <li><button class="nav-btn" onclick="switchTab('character')"><i class="fa-solid fa-user-shield"></i> Character</button></li>
+      <li><button class="nav-btn" onclick="switchTab('achievements')"><i class="fa-solid fa-trophy"></i> Badges</button></li>
+      <li><button class="nav-btn" onclick="switchTab('ai-guide')"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Guide</button></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- ==========================================================================
+         1. DASHBOARD
+         ========================================================================== -->
+    <section id="dashboard" class="section-block active">
+      <div class="hero-banner">
+        <div class="hero-title-group">
+          <p class="slogan">YOUR LIFE. YOUR QUEST. YOUR ADVENTURE.</p>
+          <h1><span id="welcomeGreetingPrefix">Welcome back</span>, <span id="dash-char-name" class="glow-text-primary">Hero</span>!</h1>
+          <div class="streak-badge" style="margin-top: 1rem;">
+            <i class="fa-solid fa-fire"></i> <span id="dash-streak">0</span> Day Streak
+          </div>
+        </div>
+        <div class="hero-level-display">
+          <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Current Rank</div>
+          <div class="level-num" id="dash-level">LVL 1</div>
+          <div style="color: var(--text-main); font-weight: 600; font-size: 0.9rem;" id="dash-title">Novice Adventurer</div>
+        </div>
+      </div>
+
+      <!-- XP Progress Card -->
+      <div class="rpg-card" style="margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <span style="font-weight: 700; font-family: var(--font-heading);"><i class="fa-solid fa-bolt glow-text-gold"></i> Experience Progress</span>
+          <span style="font-size: 0.9rem; color: var(--text-muted);" id="dash-xp-text">0 / 100 XP</span>
+        </div>
+        <div class="progress-container">
+          <div class="progress-fill" id="dash-xp-bar"></div>
+        </div>
+      </div>
+
+      <!-- Quick Stats Grid -->
+      <div class="grid-3" style="margin-bottom: 2rem;">
+        <div class="rpg-card stat-card">
+          <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div>
+            <div class="stat-val" id="dash-completed-count">0</div>
+            <div class="stat-lbl">Quests Completed</div>
+          </div>
+        </div>
+        <div class="rpg-card stat-card">
+          <div class="stat-icon" style="color: var(--gold);"><i class="fa-solid fa-gem"></i></div>
+          <div>
+            <div class="stat-val" id="dash-total-xp">0</div>
+            <div class="stat-lbl">Total XP Earned</div>
+          </div>
+        </div>
+        <div class="rpg-card stat-card">
+          <div class="stat-icon" style="color: var(--secondary);"><i class="fa-solid fa-medal"></i></div>
+          <div>
+            <div class="stat-val" id="dash-achievements-count">0/16</div>
+            <div class="stat-lbl">Badges Unlocked</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Progress Overview -->
+      <h2 class="section-title"><i class="fa-solid fa-list-check glow-text-primary"></i> Today's Priority Quests</h2>
+      <p class="section-subtitle">Complete your daily responsibilities to earn XP and level up!</p>
+      <div class="quest-grid" id="dashboard-quest-preview"></div>
+    </section>
+
+    <!-- ==========================================================================
+         2. DAILY QUESTS
+         ========================================================================== -->
+    <section id="quests" class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-scroll glow-text-gold"></i> Quest Board</h2>
+      <p class="section-subtitle">Select daily quests to build productive habits and claim rewards.</p>
+
+      <div class="rpg-card" style="margin-bottom: 2rem;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-plus"></i> Forge Custom Quest</h3>
+        <form class="create-quest-form" id="custom-quest-form" onsubmit="handleCreateQuest(event)">
+          <input type="text" id="quest-title-input" class="form-input form-input-flex" placeholder="Quest Title (e.g. Practise Piano)" required>
+          <select id="quest-cat-input" class="form-input">
+            <option value="Homework">Homework</option>
+            <option value="Study">Study</option>
+            <option value="Reading">Reading</option>
+            <option value="Health">Health / Fitness</option>
+            <option value="Chore">Chore</option>
+            <option value="Custom" selected>General</option>
+          </select>
+          <select id="quest-diff-input" class="form-input">
+            <option value="Easy">Easy (+30 XP)</option>
+            <option value="Medium" selected>Medium (+50 XP)</option>
+            <option value="Hard">Hard (+100 XP)</option>
+          </select>
+          <button type="submit" class="rpg-btn"><i class="fa-solid fa-hammer"></i> Add Quest</button>
+        </form>
+      </div>
+
+      <div class="quest-grid" id="full-quest-list"></div>
+    </section>
+
+    <!-- ==========================================================================
+         3. CHARACTER
+         ========================================================================== -->
+    <section id="character" class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-user-shield glow-text-primary"></i> Character Profile</h2>
+      <p class="section-subtitle">View your hero stats, rank, and overall life progress.</p>
+
+      <div class="rpg-card" style="margin-bottom: 2rem;">
+        <div class="profile-header">
+          <div class="avatar-frame">
+            <i class="fa-solid fa-user-ninja"></i>
+          </div>
+          <div>
+            <h2 id="char-profile-name" style="font-size: 2rem;" class="glow-text-gold">Hero</h2>
+            <p style="color: var(--secondary); font-weight: 600; font-size: 1.1rem;" id="char-profile-title">Novice Adventurer</p>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Secondary School Student • Class of Productivity</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <h3 class="heading-font" style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary);">Hero Statistics</h3>
+            <div class="char-stats-list">
+              <div class="char-stat-item">
+                <span class="stat-lbl"><i class="fa-solid fa-angle-right"></i> Current Level</span>
+                <span class="stat-val" id="char-stat-level">1</span>
+              </div>
+              <div class="char-stat-item">
+                <span class="stat-lbl"><i class="fa-solid fa-angle-right"></i> Current XP</span>
+                <span class="stat-val" id="char-stat-xp">0</span>
+              </div>
+              <div class="char-stat-item">
+                <span class="stat-lbl"><i class="fa-solid fa-angle-right"></i> Total XP Accumulated</span>
+                <span class="stat-val" id="char-stat-total-xp">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="heading-font" style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary);">Quest Records</h3>
+            <div class="char-stats-list">
+              <div class="char-stat-item">
+                <span class="stat-lbl"><i class="fa-solid fa-angle-right"></i> Quests Finished</span>
+                <span class="stat-val" id="char-stat-quests">0</span>
+              </div>
+              <div class="char-stat-item">
+                <span class="stat-lbl"><i class="fa-solid fa-angle-right"></i> Active Day Streak</span>
+                <span class="stat-val" id="char-stat-streak">0 Days</span>
+              </div>
+              <div class="char-stat-item">
+                <span class="stat-lbl"><i class="fa-solid fa-angle-right"></i> Adventurer Rank</span>
+                <span class="stat-val" id="char-stat-rank" style="color: var(--gold);">Novice</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         4. ACHIEVEMENTS & BADGES
+         ========================================================================== -->
+    <section id="achievements" class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-trophy glow-text-gold"></i> Heroic Badges & Trophies</h2>
+      <p class="section-subtitle">Earn badges across Bronze, Silver, Gold, and Platinum tiers by developing life habits.</p>
+
+      <div class="badge-filters">
+        <button class="badge-filter-btn active" onclick="filterBadges('all')">All Badges</button>
+        <button class="badge-filter-btn" onclick="filterBadges('bronze')">Bronze</button>
+        <button class="badge-filter-btn" onclick="filterBadges('silver')">Silver</button>
+        <button class="badge-filter-btn" onclick="filterBadges('gold')">Gold</button>
+        <button class="badge-filter-btn" onclick="filterBadges('platinum')">Platinum</button>
+      </div>
+
+      <div class="grid-2" id="achievements-container"></div>
+    </section>
+
+    <!-- ==========================================================================
+         5. AI GUIDE
+         ========================================================================== -->
+    <section id="ai-guide" class="section-block">
+      <h2 class="section-title"><i class="fa-solid fa-wand-magic-sparkles glow-text-secondary"></i> AI Guide & Quest Planner</h2>
+      <p class="section-subtitle">Enter your tasks for today, and the AI Guide will structure a priority quest plan for you.</p>
+
+      <div class="rpg-card">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <div style="width: 45px; height: 45px; border-radius: 50%; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--secondary); display: flex; align-items: center; justify-content: center; color: var(--secondary); font-size: 1.2rem;">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 1.1rem;">AI Tactical Advisor</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Ready to organize your schedule</p>
+          </div>
+        </div>
+
+        <div class="chat-container">
+          <div class="chat-messages" id="chat-messages">
+            <div class="message bot">
+              Greetings, Hero! What tasks or homework do you have today? Tell me, and I will organize them into an optimal quest priority list!
+            </div>
+          </div>
+          <form class="chat-input-area" onsubmit="handleAiSubmit(event)">
+            <input type="text" id="ai-input" class="form-input form-input-flex" placeholder="e.g. I have maths homework, revision and cleaning to do..." required>
+            <button type="submit" class="rpg-btn"><i class="fa-solid fa-paper-plane"></i> Plan</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================================================
+       LEVEL UP MODAL
+       ========================================================================== -->
+  <div class="modal-overlay" id="level-modal">
+    <div class="level-modal">
+      <div class="modal-icon"><i class="fa-solid fa-crown"></i></div>
+      <h1 class="heading-font glow-text-gold" style="font-size: 2.2rem; margin-bottom: 0.5rem;">LEVEL UP!</h1>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Your real-life efforts have borne fruit!</p>
+      <div style="font-size: 3rem; font-family: var(--font-heading); color: var(--secondary); margin-bottom: 1.5rem;" id="modal-level-text">
+        LVL 2
+      </div>
+      <button class="rpg-btn" onclick="closeLevelModal()"><i class="fa-solid fa-check"></i> Continue Adventure</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       JAVASCRIPT APP LOGIC
+       ========================================================================== -->
+  <script>
+    let currentBadgeFilter = 'all';
+    let isCreatingNewProfile = false;
+
+    // Helper to get default fresh quests
+    function getDefaultQuests() {
+      return [
+        { id: 1, title: "Complete Homework", category: "Homework", difficulty: "Medium", xp: 50, icon: "fa-book-open", completed: false },
+        { id: 2, title: "Study for 30 Minutes", category: "Study", difficulty: "Medium", xp: 50, icon: "fa-brain", completed: false },
+        { id: 3, title: "Read a Book", category: "Reading", difficulty: "Easy", xp: 30, icon: "fa-book-bookmark", completed: false },
+        { id: 4, title: "Exercise (20 mins)", category: "Health", difficulty: "Hard", xp: 100, icon: "fa-dumbbell", completed: false },
+        { id: 5, title: "Clean Your Room", category: "Chore", difficulty: "Easy", xp: 30, icon: "fa-broom", completed: false },
+        { id: 6, title: "Help at Home", category: "Chore", difficulty: "Easy", xp: 30, icon: "fa-hand-holding-heart", completed: false }
+      ];
+    }
+
+    // Helper to get default clean achievements
+    function getDefaultAchievements() {
+      return [
+        // BRONZE TIER
+        { id: "first_quest", tier: "bronze", name: "First Step", desc: "Complete your very first daily quest", icon: "fa-shoe-prints", reqType: "quests", reqVal: 1, unlocked: false },
+        { id: "apprentice", tier: "bronze", name: "Apprentice", desc: "Reach Character Level 2", icon: "fa-seedling", reqType: "level", reqVal: 2, unlocked: false },
+        { id: "quest_hopper", tier: "bronze", name: "Quest Hopper", desc: "Complete 5 daily quests in total", icon: "fa-list-check", reqType: "quests", reqVal: 5, unlocked: false },
+        { id: "streak_spark", tier: "bronze", name: "Spark of Habit", desc: "Maintain a 2-day daily streak", icon: "fa-fire-burner", reqType: "streak", reqVal: 2, unlocked: false },
+
+        // SILVER TIER
+        { id: "study_master", tier: "silver", name: "Knowledge Master", desc: "Complete 5 Study/Homework quests", icon: "fa-graduation-cap", reqType: "study_quests", reqVal: 5, unlocked: false },
+        { id: "bookworm", tier: "silver", name: "Scholar Reader", desc: "Complete 3 Reading quests", icon: "fa-book", reqType: "reading_quests", reqVal: 3, unlocked: false },
+        { id: "fitness_novice", tier: "silver", name: "Iron Will", desc: "Complete 3 Exercise/Health quests", icon: "fa-heart-pulse", reqType: "health_quests", reqVal: 3, unlocked: false },
+        { id: "workhorse", tier: "silver", name: "Workhorse", desc: "Accumulate 300 Total XP", icon: "fa-coins", reqType: "xp", reqVal: 300, unlocked: false },
+        { id: "streak_flame", tier: "silver", name: "Flame Keeper", desc: "Maintain a 5-day daily streak", icon: "fa-fire", reqType: "streak", reqVal: 5, unlocked: false },
+        { id: "task_veteran", tier: "silver", name: "Task Veteran", desc: "Complete 15 daily quests", icon: "fa-award", reqType: "quests", reqVal: 15, unlocked: false },
+
+        // GOLD TIER
+        { id: "guild_legend", tier: "gold", name: "Guild Legend", desc: "Reach Character Level 5", icon: "fa-shield-halved", reqType: "level", reqVal: 5, unlocked: false },
+        { id: "quest_overlord", tier: "gold", name: "Quest Overlord", desc: "Complete 30 total quests", icon: "fa-dragon", reqType: "quests", reqVal: 30, unlocked: false },
+        { id: "habit_titan", tier: "gold", name: "Habit Titan", desc: "Accumulate 1,000 Total XP", icon: "fa-gem", reqType: "xp", reqVal: 1000, unlocked: false },
+        { id: "streak_inferno", tier: "gold", name: "Unstoppable Inferno", desc: "Maintain a 10-day streak", icon: "fa-volcano", reqType: "streak", reqVal: 10, unlocked: false },
+
+        // PLATINUM TIER
+        { id: "grand_master", tier: "platinum", name: "Grand Master", desc: "Reach Character Level 10", icon: "fa-crown", reqType: "level", reqVal: 10, unlocked: false },
+        { id: "ultimate_legend", tier: "platinum", name: "RPG Mythic Legend", desc: "Earn 2,500 Total XP and complete 50 quests", icon: "fa-wand-magic-sparkles", reqType: "xp", reqVal: 2500, unlocked: false }
+      ];
+    }
+
+    // Default Zeroed-out State
+    let state = {
+      level: 1,
+      xp: 0,
+      totalXp: 0,
+      streak: 0,
+      lastActiveDate: null,
+      completedCount: 0,
+      studyQuestsCount: 0,
+      healthQuestsCount: 0,
+      readingQuestsCount: 0,
+      characterName: "",
+      quests: getDefaultQuests(),
+      achievements: getDefaultAchievements()
+    };
+
+    function resetProfileState(newHeroName) {
+      state = {
+        level: 1,
+        xp: 0,
+        totalXp: 0,
+        streak: 0,
+        lastActiveDate: null,
+        completedCount: 0,
+        studyQuestsCount: 0,
+        healthQuestsCount: 0,
+        readingQuestsCount: 0,
+        characterName: newHeroName || "Hero",
+        quests: getDefaultQuests(),
+        achievements: getDefaultAchievements()
+      };
+      saveState();
+    }
+
+    function getXpRequired(level) {
+      return level * 100;
+    }
+
+    function getRankTitle(level) {
+      if (level >= 10) return "Master Paladin";
+      if (level >= 7) return "Elite Sentinel";
+      if (level >= 5) return "Adept Warrior";
+      if (level >= 3) return "Apprentice";
+      return "Novice Adventurer";
+    }
+
+    /* --------------------------------------------------------------------------
+       GREETING & PORTAL LOGIC
+       -------------------------------------------------------------------------- */
+    function getTimeBasedGreeting() {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Good Morning";
+      if (hour < 18) return "Good Afternoon";
+      return "Good Evening";
+    }
+
+    function setupGreetingText() {
+      const timeGreeting = getTimeBasedGreeting();
+      const portalTitle = document.getElementById('portalGreetingTitle');
+      const nameInputWrapper = document.getElementById('heroNameInputWrapper');
+      const portalBtn = document.getElementById('portalEnterBtn');
+      const switchHeroBtn = document.getElementById('switchHeroBtn');
+
+      if (state.characterName && state.characterName.trim() !== "" && !isCreatingNewProfile) {
+        // RETURNING VISITOR
+        portalTitle.innerText = `Ready to continue your journey, ${state.characterName}?`;
+        nameInputWrapper.style.display = 'none';
+        portalBtn.innerHTML = `<i class="fa-solid fa-play"></i> Continue Journey`;
+        switchHeroBtn.style.display = 'inline-block';
+      } else {
+        // FIRST TIME OR NEW PROFILE CREATION
+        portalTitle.innerText = `${timeGreeting}, Traveler! Enter new Hero Name:`;
+        nameInputWrapper.style.display = 'block';
+        portalBtn.innerHTML = `<i class="fa-solid fa-dungeon"></i> Create Hero & Reset Progress`;
+        switchHeroBtn.style.display = 'none';
+      }
+
+      document.getElementById('welcomeGreetingPrefix').innerText = `${timeGreeting}, back`;
+    }
+
+    function enableHeroNameEdit() {
+      isCreatingNewProfile = true;
+      document.getElementById('portalGreetingTitle').innerText = "Enter new Hero Name (Resets all stats to 0):";
+      document.getElementById('heroNameInputWrapper').style.display = 'block';
+      document.getElementById('heroNameInput').value = '';
+      document.getElementById('heroNameInput').focus();
+      document.getElementById('portalEnterBtn').innerHTML = `<i class="fa-solid fa-rotate-left"></i> Start Fresh Profile`;
+      document.getElementById('switchHeroBtn').style.display = 'none';
+    }
+
+    function enterRealLifeRpg(e) {
+      e.preventDefault();
+      const input = document.getElementById('heroNameInput').value.trim();
+      
+      // If user is making a new hero or initializing a fresh profile
+      if (isCreatingNewProfile || !state.characterName) {
+        const nameToSet = input || "Hero";
+        resetProfileState(nameToSet);
+        isCreatingNewProfile = false;
+      } else if (input) {
+        state.characterName = input;
+      }
+
+      saveState();
+      updateUI();
+
+      // Switch view active tab directly to dashboard
+      switchTab('dashboard');
+
+      // Hide the entry overlay screen
+      document.getElementById('portalOverlay').classList.add('hidden');
+    }
+
+    /* --------------------------------------------------------------------------
+       REAL LIFE STREAK TRACKER
+       -------------------------------------------------------------------------- */
+    function checkAndFormatStreak() {
+      if (!state.lastActiveDate) return;
+
+      const todayStr = getTodayString();
+      const lastDate = new Date(state.lastActiveDate);
+      const todayDate = new Date(todayStr);
+
+      const diffTime = todayDate - lastDate;
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > 1) {
+        state.streak = 0;
+      }
+    }
+
+    function recordStreakActivity() {
+      const todayStr = getTodayString();
+
+      if (!state.lastActiveDate) {
+        state.streak = 1;
+        state.lastActiveDate = todayStr;
+      } else {
+        const lastDate = new Date(state.lastActiveDate);
+        const todayDate = new Date(todayStr);
+
+        const diffTime = todayDate - lastDate;
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          state.streak += 1;
+          state.lastActiveDate = todayStr;
+        } else if (diffDays > 1) {
+          state.streak = 1;
+          state.lastActiveDate = todayStr;
+        }
+      }
+    }
+
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    /* --------------------------------------------------------------------------
+       STORAGE MANAGEMENT (SAVE & LOAD)
+       -------------------------------------------------------------------------- */
+    function saveState() {
+      localStorage.setItem('rpg_user_state', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('rpg_user_state');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.achievements) {
+            state.achievements.forEach(defaultAch => {
+              const matched = parsed.achievements.find(a => a.id === defaultAch.id);
+              if (matched) defaultAch.unlocked = matched.unlocked;
+            });
+            delete parsed.achievements;
+          }
+          state = { ...state, ...parsed };
+        } catch (e) {
+          console.error("Failed to parse saved state", e);
+        }
+      }
+      checkAndFormatStreak();
+    }
+
+    /* --------------------------------------------------------------------------
+       NAVIGATION & TABS
+       -------------------------------------------------------------------------- */
+    function switchTab(tabId) {
+      document.querySelectorAll('.section-block').forEach(sec => sec.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      
+      const selectedSec = document.getElementById(tabId);
+      if (selectedSec) selectedSec.classList.add('active');
+
+      const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => {
+        const onclickAttr = btn.getAttribute('onclick');
+        return onclickAttr && onclickAttr.includes(tabId);
+      });
+      if (activeBtn) activeBtn.classList.add('active');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* --------------------------------------------------------------------------
+       QUEST RENDERING & INTERACTION
+       -------------------------------------------------------------------------- */
+    function renderQuests() {
+      const dashPreview = document.getElementById('dashboard-quest-preview');
+      const fullList = document.getElementById('full-quest-list');
+
+      dashPreview.innerHTML = '';
+      fullList.innerHTML = '';
+
+      state.quests.forEach(quest => {
+        const questCardHTML = createQuestCardHTML(quest);
+        fullList.innerHTML += questCardHTML;
+
+        if (!quest.completed) {
+          dashPreview.innerHTML += questCardHTML;
+        }
+      });
+
+      if (dashPreview.children.length === 0) {
+        dashPreview.innerHTML = `
+          <div class="rpg-card" style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">
+            <i class="fa-solid fa-circle-check" style="font-size: 2rem; color: var(--secondary); margin-bottom: 0.5rem;"></i>
+            <p>All daily quests completed! Great job, Hero!</p>
+          </div>
+        `;
+      }
+    }
+
+    function createQuestCardHTML(quest) {
+      const diffClass = quest.difficulty === 'Easy' ? 'tag-easy' : quest.difficulty === 'Medium' ? 'tag-medium' : 'tag-hard';
+      
+      return `
+        <div class="rpg-card quest-card ${quest.completed ? 'completed' : ''}">
+          <div>
+            <div class="quest-header">
+              <div class="quest-icon"><i class="fa-solid ${quest.icon}"></i></div>
+              <span class="quest-tag ${diffClass}">${quest.difficulty}</span>
+            </div>
+            <div class="quest-title">${quest.title}</div>
+            <div class="quest-desc">Category: ${quest.category}</div>
+          </div>
+          <div class="quest-footer">
+            <div class="quest-reward"><i class="fa-solid fa-bolt"></i> +${quest.xp} XP</div>
+            ${quest.completed 
+              ? `<span style="color: #81c784; font-size: 0.85rem; font-weight:700;"><i class="fa-solid fa-check"></i> Finished</span>`
+              : `<button class="rpg-btn" onclick="completeQuest(${quest.id})">Complete</button>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    function completeQuest(id) {
+      const quest = state.quests.find(q => q.id === id);
+      if (!quest || quest.completed) return;
+
+      quest.completed = true;
+      state.completedCount += 1;
+
+      // Track categories
+      const cat = quest.category.toLowerCase();
+      if (cat.includes('study') || cat.includes('homework')) state.studyQuestsCount = (state.studyQuestsCount || 0) + 1;
+      if (cat.includes('read')) state.readingQuestsCount = (state.readingQuestsCount || 0) + 1;
+      if (cat.includes('health') || cat.includes('exercise')) state.healthQuestsCount = (state.healthQuestsCount || 0) + 1;
+      
+      recordStreakActivity();
+      addXP(quest.xp);
+      checkAchievements();
+      saveState();
+      updateUI();
+    }
+
+    function handleCreateQuest(e) {
+      e.preventDefault();
+      const titleInput = document.getElementById('quest-title-input');
+      const catInput = document.getElementById('quest-cat-input');
+      const diffInput = document.getElementById('quest-diff-input');
+
+      const title = titleInput.value.trim();
+      const cat = catInput.value;
+      const diff = diffInput.value;
+      if (!title) return;
+
+      let xp = 30;
+      if (diff === 'Medium') xp = 50;
+      if (diff === 'Hard') xp = 100;
+
+      let icon = "fa-scroll";
+      if (cat === "Homework") icon = "fa-book-open";
+      if (cat === "Study") icon = "fa-brain";
+      if (cat === "Reading") icon = "fa-book-bookmark";
+      if (cat === "Health") icon = "fa-dumbbell";
+      if (cat === "Chore") icon = "fa-broom";
+
+      const newQuest = {
+        id: Date.now(),
+        title: title,
+        category: cat,
+        difficulty: diff,
+        xp: xp,
+        icon: icon,
+        completed: false
+      };
+
+      state.quests.unshift(newQuest);
+      titleInput.value = '';
+      saveState();
+      updateUI();
+    }
+
+    /* --------------------------------------------------------------------------
+       XP & LEVEL SYSTEM
+       -------------------------------------------------------------------------- */
+    function addXP(amount) {
+      state.xp += amount;
+      state.totalXp += amount;
+
+      let req = getXpRequired(state.level);
+      if (state.xp >= req) {
+        state.xp -= req;
+        state.level += 1;
+        triggerLevelUpModal();
+      }
+    }
+
+    function triggerLevelUpModal() {
+      document.getElementById('modal-level-text').innerText = `LVL ${state.level}`;
+      document.getElementById('level-modal').classList.add('active');
+    }
+
+    function closeLevelModal() {
+      document.getElementById('level-modal').classList.remove('active');
+    }
+
+    /* --------------------------------------------------------------------------
+       ACHIEVEMENTS SYSTEM & EXPANDED BADGE LOGIC
+       -------------------------------------------------------------------------- */
+    function getStatValueForReq(reqType) {
+      switch(reqType) {
+        case 'quests': return state.completedCount || 0;
+        case 'level': return state.level || 1;
+        case 'xp': return state.totalXp || 0;
+        case 'streak': return state.streak || 0;
+        case 'study_quests': return state.studyQuestsCount || 0;
+        case 'reading_quests': return state.readingQuestsCount || 0;
+        case 'health_quests': return state.healthQuestsCount || 0;
+        default: return 0;
+      }
+    }
+
+    function checkAchievements() {
+      state.achievements.forEach(ach => {
+        if (!ach.unlocked) {
+          const val = getStatValueForReq(ach.reqType);
+          if (val >= ach.reqVal) {
+            ach.unlocked = true;
+          }
+        }
+      });
+    }
+
+    function filterBadges(tier) {
+      currentBadgeFilter = tier;
+      document.querySelectorAll('.badge-filter-btn').forEach(btn => {
+        const onClick = btn.getAttribute('onclick');
+        btn.classList.toggle('active', onClick && onClick.includes(`'${tier}'`));
+      });
+      renderAchievements();
+    }
+
+    function renderAchievements() {
+      const container = document.getElementById('achievements-container');
+      container.innerHTML = '';
+
+      const filtered = state.achievements.filter(ach => {
+        if (currentBadgeFilter === 'all') return true;
+        return ach.tier === currentBadgeFilter;
+      });
+
+      filtered.forEach(ach => {
+        const currentVal = getStatValueForReq(ach.reqType);
+        const progressPct = Math.min(100, Math.floor((currentVal / ach.reqVal) * 100));
+
+        container.innerHTML += `
+          <div class="rpg-card achievement-card tier-${ach.tier} ${ach.unlocked ? '' : 'locked'}">
+            <div class="achievement-icon">
+              <i class="fa-solid ${ach.icon}"></i>
+            </div>
+            <div class="achievement-info">
+              <div class="achievement-title">
+                <span>${ach.name}</span>
+                <span class="badge-tier-tag tag-tier-${ach.tier}">${ach.tier}</span>
+              </div>
+              <div class="achievement-desc">${ach.desc}</div>
+              
+              <div class="progress-container">
+                <div class="progress-fill" style="width: ${progressPct}%;"></div>
+              </div>
+              <div class="badge-progress-text">
+                ${ach.unlocked ? 'Unlocked' : `${Math.min(currentVal, ach.reqVal)} / ${ach.reqVal}`}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    /* --------------------------------------------------------------------------
+       AI GUIDE / AI TASK PLANNER
+       -------------------------------------------------------------------------- */
+    function handleAiSubmit(e) {
+      e.preventDefault();
+      const inputEl = document.getElementById('ai-input');
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      appendChatMessage(text, 'user');
+      inputEl.value = '';
+
+      setTimeout(() => {
+        const advice = generateAiAdvice(text);
+        appendChatMessage(advice, 'bot');
+      }, 600);
+    }
+
+    function appendChatMessage(text, sender) {
+      const chatBox = document.getElementById('chat-messages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      msgDiv.innerHTML = text;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function generateAiAdvice(userText) {
+      const lower = userText.toLowerCase();
+      let tasks = [];
+
+      if (lower.includes('math') || lower.includes('homework') || lower.includes('revision') || lower.includes('study')) {
+        tasks.push({ name: "High Priority: Complete Urgent Homework / Study", xp: 50 });
+      }
+      if (lower.includes('clean') || lower.includes('room') || lower.includes('chore') || lower.includes('help')) {
+        tasks.push({ name: "Medium Priority: Room Cleaning & House Chores", xp: 30 });
+      }
+      if (lower.includes('read') || lower.includes('book')) {
+        tasks.push({ name: "Lower Priority: Daily Reading Session", xp: 30 });
+      }
+      if (lower.includes('exercise') || lower.includes('run') || lower.includes('gym') || lower.includes('sport')) {
+        tasks.push({ name: "High Priority: Health & Physical Exercise", xp: 100 });
+      }
+
+      if (tasks.length === 0) {
+        tasks.push({ name: userText, xp: 50 });
+      }
+
+      let response = `<strong>Quest Tactical Strategy Formulated!</strong><br><br>Based on your input, here is your recommended Quest Sequence:<br><ol style="margin-left: 1.2rem; margin-top: 0.5rem;">`;
+      tasks.forEach((t) => {
+        response += `<li><strong>${t.name}</strong> (+${t.xp} XP)</li>`;
+      });
+      response += `</ol><br><em>Tip: Complete tasks on consecutive days to build your real-life streak and unlock Gold Badges!</em>`;
+
+      return response;
+    }
+
+    /* --------------------------------------------------------------------------
+       UI UPDATE & REFRESH
+       -------------------------------------------------------------------------- */
+    function updateUI() {
+      const reqXp = getXpRequired(state.level);
+      const xpPct = Math.min(100, Math.floor((state.xp / reqXp) * 100));
+      const rankTitle = getRankTitle(state.level);
+      const displayName = state.characterName || "Hero";
+
+      document.getElementById('dash-char-name').innerText = displayName;
+      document.getElementById('dash-level').innerText = `LVL ${state.level}`;
+      document.getElementById('dash-title').innerText = rankTitle;
+      document.getElementById('dash-streak').innerText = state.streak;
+      document.getElementById('dash-xp-text').innerText = `${state.xp} / ${reqXp} XP`;
+      document.getElementById('dash-xp-bar').style.width = `${xpPct}%`;
+      document.getElementById('dash-completed-count').innerText = state.completedCount;
+      document.getElementById('dash-total-xp').innerText = state.totalXp;
+
+      const unlockedBadges = state.achievements.filter(a => a.unlocked).length;
+      document.getElementById('dash-achievements-count').innerText = `${unlockedBadges}/${state.achievements.length}`;
+
+      document.getElementById('char-profile-name').innerText = displayName;
+      document.getElementById('char-profile-title').innerText = rankTitle;
+      document.getElementById('char-stat-level').innerText = state.level;
+      document.getElementById('char-stat-xp').innerText = `${state.xp} / ${reqXp}`;
+      document.getElementById('char-stat-total-xp').innerText = state.totalXp;
+      document.getElementById('char-stat-quests').innerText = state.completedCount;
+      document.getElementById('char-stat-streak').innerText = `${state.streak} Days`;
+      document.getElementById('char-stat-rank').innerText = rankTitle;
+
+      renderQuests();
+      renderAchievements();
+    }
+
+    /* --------------------------------------------------------------------------
+       INIT
+       -------------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      setupGreetingText();
+      checkAchievements();
+      updateUI();
+    });
+  </script>
+</body>
+</html>
